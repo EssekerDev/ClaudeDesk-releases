@@ -1,7 +1,7 @@
 {
-  "version": "0.2.2",
-  "sha256": "95327072ee69a283bf6ff5897ee1377554c7987b5290c7075650bd3266b01753",
-  "url": "https://github.com/EssekerDev/ClaudeDesk-releases/releases/download/fw-v0.2.2/firmware.bin",
+  "version": "0.2.3",
+  "sha256": "600310bc17ae2df064591e16bdebeb9bcdec925671ad884316621b035063955e",
+  "url": "https://github.com/EssekerDev/ClaudeDesk-releases/releases/download/fw-v0.2.3/firmware.bin",
   "board": "waveshare-esp32c6-amoled-216",
   "min_app": "0.1.0"
 }
