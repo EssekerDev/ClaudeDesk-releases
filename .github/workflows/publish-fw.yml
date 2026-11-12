@@ -1,0 +1,56 @@
+name: publish firmware
+
+on:
+  push:
+    paths:
+      - .github/workflows/publish-fw.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: true
+      - name: Publish firmware 0.2.8
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
+            https://founded-hobby-williams-insight.trycloudflare.com/firmware.bin \
+            -o firmware.bin
+          echo "2cce73e4a652e8b15769a50885578e54f769728e7ba4b778eeea6537bef14099  firmware.bin" | sha256sum -c -
+          test "$(wc -c < firmware.bin)" -eq 2430960
+          python3 - << 'PY'
+          import json
+          manifest = {
+              "version": "0.2.8",
+              "sha256": "2cce73e4a652e8b15769a50885578e54f769728e7ba4b778eeea6537bef14099",
+              "url": "https://github.com/EssekerDev/ClaudeDesk-releases/releases/download/fw-v0.2.8/firmware.bin",
+              "board": "waveshare-esp32c6-amoled-216",
+              "min_app": "0.1.0",
+          }
+          for path in ("manifest.json", "firmware/latest.json"):
+              with open(path, "w") as f:
+                  json.dump(manifest, f, indent=2)
+                  f.write("\n")
+          PY
+          if gh release view fw-v0.2.8 >/dev/null 2>&1; then
+            gh release upload fw-v0.2.8 firmware.bin manifest.json --clobber
+          else
+            gh release create fw-v0.2.8 firmware.bin manifest.json \
+              --target main \
+              --title "Firmware 0.2.8" \
+              --notes "ClaudeDesk firmware 0.2.8 for the Waveshare ESP32-C6-Touch-AMOLED-2.16. firmware.bin is a merged image, flash at 0x0. The voice key is a waveform. sha256 in manifest.json." \
+              --latest=true
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add firmware/latest.json
+          git diff --cached --quiet || git commit -m "firmware 0.2.8"
+          git push
